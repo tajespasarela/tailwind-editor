@@ -1,51 +1,62 @@
 <script setup>
-  import { onMounted, reactive, watch } from 'vue';
-  import colors from 'tailwindcss/colors';
+  import { onMounted, reactive, ref, watch } from 'vue';
+  import { customTailwindConfig } from '../custom-tailwind-config.js';
+  import { fetchCss } from '../fetch-css.js';
 
-  const editableColors = reactive(Object.entries(colors)
-      .filter(([colorName]) => !['inherit', 'current', 'transparent', 'black', 'white'].includes(
-          colorName))
-      .reduce((resultColors, [colorName, colorValue]) => {
-        resultColors[colorName] = colorValue;
-        return resultColors;
-      }, {}));
+  const editableCustomConfig = reactive(customTailwindConfig);
+  const css = ref('');
 
   async function getCss() {
-    getStyleElement().innerHTML = await fetch('http://localhost:8080', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        html: document.body.innerHTML,
-        theme: {
-          extend: { colors: editableColors }
-        }
-      })
-    }).then(response => response.text());
-  }
-
-  function getStyleElement() {
-    let styleElement = document.getElementById('css');
-    if (!styleElement) {
-      styleElement = document.createElement('style');
-      styleElement.id = 'css';
-      document.head.append(styleElement);
-    }
-    return styleElement;
+    css.value = await fetchCss(editableCustomConfig);
   }
 
   onMounted(getCss);
-  watch(editableColors, getCss);
+  watch(editableCustomConfig, getCss);
+
 </script>
 
 <template>
-<section style="display: flex; flex-flow: row wrap;">
-  <div v-for="(color, colorName) in editableColors" style="display: flex; flex-flow: column nowrap;">
-    <label v-for="(_, shadeName) in color">{{ colorName }} {{ shadeName }}
-      <input type="color" v-model.lazy="color[shadeName]">
-    </label>
-  </div>
-</section>
 
+  <div class="flex flex-col flex-nowrap gap-10 w-1/2  m-10">
+    <h2 class="font-bold">Colors</h2>
+    <section class="flex flex-row flex-wrap gap-10">
+      <div v-for="(color, colorName) in editableCustomConfig.colors"
+           style="display: flex; flex-flow: column nowrap;">
+        <label v-for="(_, shadeName) in color">{{ colorName }} {{ shadeName }}
+          <input type="color" v-model.lazy="color[shadeName]">
+        </label>
+      </div>
+    </section>
+
+    <h2 class="font-bold">Font Sizes</h2>
+    <section class="flex flex-row flex-wrap gap-10">
+      <label v-for="(_, sizeName) in editableCustomConfig.fontSize">{{
+          sizeName.replace('size-', '')
+        }}
+        <input type="number"
+               step="0.125"
+               class="w-14 border border-black text-center"
+               :value="editableCustomConfig.fontSize[sizeName].replace('rem','')"
+               @input="event=> editableCustomConfig.fontSize[sizeName] = event.target.value + 'rem'">rem
+      </label>
+    </section>
+
+    <h2 class="font-bold">Font Weight</h2>
+    <section class="flex flex-row flex-wrap gap-10">
+      <label v-for="(_, weightName) in editableCustomConfig.fontWeight">{{
+          weightName.replace('weight-', '')
+        }}
+        <input type="number"
+               step="100"
+               min="100"
+               max="900"
+               class="w-14 border border-black text-center"
+               v-model="editableCustomConfig.fontWeight[weightName]">
+      </label>
+    </section>
+  </div>
+
+  <component class="w-1/2 p-10 block whitespace-pre-wrap visible bg-yellow-100 h-screen overflow-scroll" is="style">{{ css }}</component>
 </template>
 
 <style scoped>
