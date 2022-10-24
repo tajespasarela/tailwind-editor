@@ -66,7 +66,9 @@ The resulting package:
 
 ## Creating the Tailwindcss service
 
-Now, we are going to create the service that will receive the Tailwindcss config and return the CSS. Let’s start with a file `src/tailwind-as-a-service.js` which will contain the [ExpressJs](https://expressjs.com/) server with the `cors` middleware to support [cross-origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) calls. It is listening by port 8080 to any request to the root path with a `GET` method and returns a text with `Hello World`.
+Now, we are going to create the service that will receive the Tailwindcss config and return the resulting CSS.
+
+Let’s start with a file `src/tailwind-as-a-service.js` which will contain the [ExpressJs](https://expressjs.com/) server with the `cors` middleware to support [cross-origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) calls. It is listening by port 8080 to any request to the root path with a `GET` method and returns a text with `Hello World`.
 
 ```jsx
 // src/tailwind-as-a-service.js
@@ -87,7 +89,7 @@ app.listen(port, () => {
 })
 ```
 
-Running the server with node we have the response directly in the browser:
+Running the server in node lets you check the response directly in the browser:
 
 ```bash
 $ node ./src/tailwind-as-a-service.js
@@ -95,7 +97,7 @@ $ node ./src/tailwind-as-a-service.js
 
 ![Hello World](images/hello-world.png)
 
-> We are using Node 16, which supports [ES modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) by default. If you are using older versions of Node you can use CommonJs modules and just rename the file with the `.cjs` extension.
+> Since we are using Vite and [ES modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules), the minimum node version required to follow this article is 14.18+.
 >
 
 So far, so good. Now we are going to configure `postcss` and its tailwind plugin to return CSS:
@@ -128,7 +130,7 @@ app.get('/', async (req, res) => {
 
 We added the `postcss` and `tailwindcss` dependencies. Then we configure the Tailwindcss plugin for postcss with the [content](https://tailwindcss.com/docs/content-configuration) option.
 
-This option tells Tailwindcss to inspect the HTML, JavaScript components and more files, to look for CSS classes to generate and include its CSS in the final result. It allows also us to put inline “raw” HTML.
+This option tells Tailwindcss to inspect the HTML, JavaScript components and more files, to look for CSS classes to generate and include its CSS in the final result. It also allows us to put inline “raw” HTML.
 
 After that, we create a `postcssProcessor` with the configured plugin of Tailwindcss. This is responsible for parsing the CSS and applying all postcss plugins.
 
@@ -142,17 +144,26 @@ Here you can see the base CSS that [Tailwindcss brings by default](https://tailw
 
 So we have a service to request and return the CSS, but how do we configure that CSS? well let’s make this service receive parameters and use them to configure the Tailwindcss plugin:
 
-```jsx
+```javascript
 // src/tailwind-as-a-service.js
-
 ......
+
+const defaultCss = `
+  @import 'tailwindcss/base';
+  @import 'tailwindcss/components';
+  @import 'tailwindcss/utilities';
+`;
+
 app.post('/', async (req, res) => {
   const configuredTailwind = tailwindcss({
     content: [{ raw: req.body.html, extension: 'html' }],
     theme: req.body.theme
   });
-......
+  const postcssProcessor = postcss([configuredTailwind]);
+  const { css } = await postcssProcessor.process(defaultCss);
+  res.send(css);
 });
+
 ......
 ```
 
@@ -221,7 +232,7 @@ export const customTailwindConfig = {
 };
 ```
 
-> Keep in mind that we are using the Tailwind Theme configuration for simplicity’s sake and it is not the only way to achieve the same result. The whole Tailwindcss configuration could be overridden, included the [plugins](https://tailwindcss.com/docs/plugins) used or de configuration of these plugins. You could think about to create your own Tailwindcss plugin, for example, which could add all your CSS components based on a configuration passed to the plugin. This configuration could be passed as parameter to the Tailwindcss service as we are doing here with the Theme configuration.
+> Keep in mind that we are using the Tailwind Theme configuration for simplicity’s sake and, it is not the only way to achieve the same result. The whole Tailwindcss configuration could be overridden, included the [plugins](https://tailwindcss.com/docs/plugins) used and/or their configuration. For example, you could create your own Tailwindcss plugin, adding all your CSS components based on a configuration passed to the plugin. This configuration could be passed as parameter to the Tailwindcss service as we are doing here with the theme configuration.
 >
 
 Now, we go to the `App.vue` component and remove all default content, adding some buttons and titles using the CSS utility classes which Tailwindcss generates with the previous Theme configuration:
@@ -230,51 +241,51 @@ Now, we go to the `App.vue` component and remove all default content, adding som
 // src/App.vue
 
 <template>
-		<section class="flex flex-col gap-10 min-w-[200px] m-10">
-		      <section class="flex flex-col gap-10">
-		        <button class="w-40 h-8 rounded bg-primary-50 hover:bg-primary-75 text-primary-25 hover:text-primary-25 text-button font-weight-button">
-		          Button Primary
-		        </button>
-		        <button class="w-40 h-8 rounded bg-secondary-50 hover:bg-secondary-75 text-secondary-25 hover:text-secondary-25 text-button font-weight-button">
-		          Button Secondary
-		        </button>
-		        <button class="w-40 h-8 rounded bg-success-50 hover:bg-success-75 text-success-25 hover:text-success-25 text-button font-weight-button">
-		          Button Success
-		        </button>
-		        <button class="w-40 h-8 rounded bg-warning-50 hover:bg-warning-75 text-warning-25 hover:text-warning-25 text-button font-weight-button">
-		          Button Warning
-		        </button>
-		        <button class="w-40 h-8 rounded bg-error-50 hover:bg-error-75 text-error-25 hover:text-error-25 text-button font-weight-button">
-		          Button Error
-		        </button>
-		      </section>
-		
-		      <section class="flex flex-col gap-10 m-10">
-		        <h1 class="text-title-1 text-size-title1 font-weight-title1">
-		          Title 1
-		        </h1>
-		        <h2 class="text-title-2 text-size-title2 font-weight-title2">
-		          Tittle 2
-		        </h2>
-		        <h3 class="text-title-3 text-size-title3 font-weight-title3">
-		          Tittle 3
-		        </h3>
-		        <h4 class="text-title-4 text-size-title4 font-weight-title4">
-		          Tittle 4
-		        </h4>
-		      </section>
-		    </section>
-		</section>
+  <section class="flex flex-col gap-10 min-w-[200px] m-10">
+    <section class="flex flex-col gap-10">
+      <button class="w-40 h-8 rounded bg-primary-50 hover:bg-primary-75 text-primary-25 hover:text-primary-25 text-button font-weight-button">
+        Button Primary
+      </button>
+      <button class="w-40 h-8 rounded bg-secondary-50 hover:bg-secondary-75 text-secondary-25 hover:text-secondary-25 text-button font-weight-button">
+        Button Secondary
+      </button>
+      <button class="w-40 h-8 rounded bg-success-50 hover:bg-success-75 text-success-25 hover:text-success-25 text-button font-weight-button">
+        Button Success
+      </button>
+      <button class="w-40 h-8 rounded bg-warning-50 hover:bg-warning-75 text-warning-25 hover:text-warning-25 text-button font-weight-button">
+        Button Warning
+      </button>
+      <button class="w-40 h-8 rounded bg-error-50 hover:bg-error-75 text-error-25 hover:text-error-25 text-button font-weight-button">
+        Button Error
+      </button>
+    </section>
+  
+    <section class="flex flex-col gap-10 m-10">
+      <h1 class="text-title-1 text-size-title1 font-weight-title1">
+        Title 1
+      </h1>
+      <h2 class="text-title-2 text-size-title2 font-weight-title2">
+        Tittle 2
+      </h2>
+      <h3 class="text-title-3 text-size-title3 font-weight-title3">
+        Tittle 3
+      </h3>
+      <h4 class="text-title-4 text-size-title4 font-weight-title4">
+        Tittle 4
+      </h4>
+    </section>
+  </section>
+  </section>
 </template>
 ```
 
-Before of running the `dev` script for running the Vue project, we modify this script in the `package.json` file to run at the same time the tailwind service:
+Before running the `dev` script to serve the Vue project, we will modify this script in our `package.json` to parallelise its execution with the tailwind service:
 
 ```json
 "dev": "node ./src/tailwind-as-a-service.js & vite",
 ```
 
-Then we run the project and go to the local URL:
+Afterwards, we run the project and visit the locally served URL:
 
 ```bash
 $ npm run dev
@@ -295,8 +306,8 @@ We create a new file `fetch-css.js` in the `src` directory:
 ```jsx
 // src/fetch-css.js
 
-export async functionfetchCss(tailwindCustomConfig) {
-return awaitfetch('http://localhost:8080', {
+export async function fetchCss(tailwindCustomConfig) {
+  return await fetch('http://localhost:8080', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
@@ -377,7 +388,8 @@ We are starting with the colours, adding a colour picker for each colour we want
 ```html
 // src/components/Editor.vue
 <script setup>
-	......
+  import { onMounted, reactive, ref, watch } from 'vue';
+  ......
 
   const css = ref('');
   const editableCustomConfig = reactive(customTailwindConfig);
@@ -425,7 +437,7 @@ In this step, we are doing several changes to be able to modify reactively the c
   > Notice we are binding the colour shade to the `v-model` using the colour and the shade name, instead of using the `v-for` variable directly. This is because the variable used to iterate in the `v-for` loops is not allowed to be modified. So the workaround is to access the value indirectly.
   >
 
-  Then if we run again the application we can see the colour pickers and changing a color the component using that colour will be updated automatically:
+  Then, if we run again the application we can see the colour pickers and changing a color the component using that colour will be updated automatically:
 
   ![Colour Editor](images/color-editor.png)
 
@@ -480,13 +492,13 @@ And here is the final aspect of the editor:
 ![Full Editor](images/full-editor.png)
 
 So this is the starting point to create your own no-code tool, to configure your project and see the changes on the fly. Remind that using the Theme values is not the only way to make this configurable, and you can use all the Tailwindcss config options.
-You can find all the working code [here](https://github.com/tajespasarela/tailwind-editor) fell free to open issues or leave comments and stars 😉.
+You can find all the working code [here](https://github.com/tajespasarela/tailwind-editor) .Please, feel free to open issues, give feedback and, if you have found it useful, a star would be much appreciated 😉.
 
 ## Why not CSS custom properties AKA CSS variables?
 
 We could achieve exactly the same by using CSS variables as values in the Tailwindcss Theme configuration, and just modifying the value of these variables in the front, without the need for any service neither Tailwindcss process on the fly.
 
-Then after saving these variables and loading them in production will have deployed the changes.
+Then, after saving these variables and loading them in production will have deployed the changes.
 
 ![Why](images/why.gif)
 
