@@ -14,9 +14,9 @@ But in this article, we are going to focus only on the editor part and how to pr
 
 ![Architecture Detail](images/architecture-detail.png)
 
-To achieve that we are going to create a simple service in Node using [ExpressJs](https://expressjs.com/). This service will receive the Tailwindcss configuration from the frontend editor and run [Postcss](https://postcss.org/) with the Tailwindcss plugin to generate the CSS. Finally, the service will return the generated CSS to the editor, which will update the page to show the changes.
+To achieve that, we are going to create a simple service in Node using [ExpressJs](https://expressjs.com/). This service will receive the Tailwindcss configuration from the frontend editor and run [Postcss](https://postcss.org/) with the Tailwindcss plugin to generate the CSS. Finally, the service will return the generated CSS to the editor, which will update the page to show the changes.
 
-> We could try to run the postcss and tailwind plugin directly in the browser, making it to work with node polyfills, using tailwind internals implementations like they do in [play.tailwindcss.com](https://play.tailwindcss.com/), or using the brand new [Web Containers](https://blog.stackblitz.com/posts/introducing-webcontainers/) but for simplicity's sake, we do it in a simple node service.
+> We could try to run the postcss and tailwind plugin directly in the browser, making it to work with node polyfills. This is what they do in [play.tailwindcss.com](https://play.tailwindcss.com/) using tailwind internals implementations. Another option is the brand new [Web Containers](https://blog.stackblitz.com/posts/introducing-webcontainers/) but for simplicity's sake, we do it in a simple node service.
 >
 
 ## Creating the project
@@ -291,7 +291,7 @@ Afterwards, we run the project and visit the locally served URL:
 $ npm run dev
 ```
 
-In the [latest version of Vite](https://github.com/vitejs/vite/blob/main/packages/vite/CHANGELOG.md) we are using, the default port is `5153`:
+We are using the [latest version of Vite](https://github.com/vitejs/vite/blob/main/packages/vite/CHANGELOG.md), so the default port is `5153`:
 
 ![Running Vite](images/running-vite.png)
 
