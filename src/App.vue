@@ -25,13 +25,13 @@
           Title 1
         </h1>
         <h2 class="text-title-2 text-size-title2 font-weight-title2">
-          Tittle 2
+          Title 2
         </h2>
         <h3 class="text-title-3 text-size-title3 font-weight-title3">
-          Tittle 3
+          Title 3
         </h3>
         <h4 class="text-title-4 text-size-title4 font-weight-title4">
-          Tittle 4
+          Title 4
         </h4>
       </section>
     </section>
