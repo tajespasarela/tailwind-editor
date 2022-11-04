@@ -171,7 +171,7 @@ Here, we changed the `.get` method into `.post` to be able to send and receive p
 
 Moreover, we pick `html` and `theme` parameters from the request body and use them to [configure Tailwind](https://tailwindcss.com/docs/configuration).
 
-> For simplicity, we are using only the `theme` part of the Tailwind configuration, but this approach, allows any part of the [Tailwind configuration](https://tailwindcss.com/docs/configuration).
+> For simplicity, we are using only the `theme` part of the [Tailwind configuration](https://tailwindcss.com/docs/configuration), but this approach, allows any part of it to be configured.
 >
 
 ## Creating the Editor
