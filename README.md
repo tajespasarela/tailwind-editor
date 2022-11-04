@@ -1,27 +1,27 @@
 # Tailwind + Vue No-code editor
 
-There has been much talk about no-code lately. This movement tries to approach software development to non-developers, offering tools that allow them to create and modify applications without using code. The benefits of no-code tools include speed, accessibility, reduced costs and autonomy.
+There has been a lot of talk about no-code solutions lately. This movement tries to approach non-developers by offering software development tools that allow them to create and modify applications without using code. The benefits of no-code tools include speed, accessibility, reduced costs and autonomy.
 
 Thinking about this idea, I wondered how to create a no-code editor for a web application. But, since a tool like this would be huge for a single post, I decided to focus only on the personalization of the styles and themes.
 
-For that, I decided to rely on one of the most popular CSS frameworks at the moment: Tailwindcss. Not because of its usual use, but for all the tools it has in terms of configuration and CSS generation.
+So, I chose to rely on one of the most popular CSS frameworks at the moment: Tailwind. Not because of its usual use, but for all the tools it has in terms of configuration and CSS generation.
 
-The idea is to create a frontend interface which allows to modify the [Tailwindcss configuration](https://tailwindcss.com/docs/configuration) on live and shows the result styles applied. Then, this customized configuration could be stored and used in the build and deployment process of a hypothetical application.
+The idea is to create a frontend interface which allows the [Tailwind configuration](https://tailwindcss.com/docs/configuration) to be modified in real time and shows the result styles applied. Then, this customized configuration could be stored and used in the build and deployment process of a hypothetical application.
 
 ![Architecture](images/architecture.png)
 
-But in this article, we are going to focus only on the editor part and how to preview on live the Tailwindcss config changes.
+However, in this article, we are going to focus only on the editor and how to achieve a real-time preview of the Tailwind config changes.
 
 ![Architecture Detail](images/architecture-detail.png)
 
-To achieve that, we are going to create a simple service in Node using [ExpressJs](https://expressjs.com/). This service will receive the Tailwindcss configuration from the frontend editor and run [Postcss](https://postcss.org/) with the Tailwindcss plugin to generate the CSS. Finally, the service will return the generated CSS to the editor, which will update the page to show the changes.
+To do so, we are going to create a simple service in Node using [ExpressJs](https://expressjs.com/). This service will receive the Tailwind configuration from the frontend editor and run [PostCSS](https://postcss.org/) with the Tailwind plugin to generate the CSS. Finally, the service will return the generated CSS to the editor, which will update the page to show the changes.
 
-> We could try to run the postcss and tailwind plugin directly in the browser, making it to work with node polyfills. This is what they do in [play.tailwindcss.com](https://play.tailwindcss.com/) using tailwind internals implementations. Another option is the brand new [Web Containers](https://blog.stackblitz.com/posts/introducing-webcontainers/) but for simplicity's sake, we do it in a simple node service.
+> We could try to run the PostCSS and Tailwind plugin directly in the browser, make it work with node polyfills; that is how is done in [Tailwind Play's](https://play.tailwindcss.com/) internal implementation. Another option would be use [Web Containers](https://blog.stackblitz.com/posts/introducing-webcontainers/), but for simplicity's sake, we are going to run it in a simple node service.
 >
 
-## Creating the project
+## Creating the Project
 
-Let’s create the new project called `tailwind-editor` with [Vite](https://vitejs.dev/) running `npm create`. I’m going to use [Vue](https://vuejs.org/) for the Frontend because I’m more comfortable with it and also because it is Awesome ;)
+Let’s create the new project called `tailwind-editor` with [Vite](https://vitejs.dev/) running `npm create`. I’m going to use [Vue](https://vuejs.org/) for the Frontend because I’m more comfortable with it and also because it is awesome 😉.
 
 ```bash
 $ dev npm create vite@latest
@@ -30,7 +30,7 @@ $ dev npm create vite@latest
 ✔ Select a variant: › JavaScript
 ```
 
-Then, we add the dependencies for the service.
+Then, add the dependencies for the service.
 
 ```bash
 $ cd tailwind-editor
@@ -64,11 +64,11 @@ The resulting package:
 }
 ```
 
-## Creating the Tailwindcss service
+## Creating the Tailwind Service
 
-Now, we are going to create the service that will receive the Tailwindcss config and return the resulting CSS.
+Now, we are going to create the service that will receive the Tailwind config and return the resulting CSS.
 
-Let’s start with a file `src/tailwind-as-a-service.js` which will contain the [ExpressJs](https://expressjs.com/) server with the `cors` middleware to support [cross-origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) calls. It is listening by port 8080 to any request to the root path with a `GET` method and returns a text with `Hello World`.
+Let’s start with a file `src/tailwind-as-a-service.js` which will contain the [Express](https://expressjs.com/) server with the `cors` middleware to support [cross-origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) calls. It is listening by port 8080 to any request to the root path with a `GET` method and returns the text `Hello World`.
 
 ```jsx
 // src/tailwind-as-a-service.js
@@ -100,7 +100,7 @@ $ node ./src/tailwind-as-a-service.js
 > Since we are using Vite and [ES modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules), the minimum node version required to follow this article is 14.18+.
 >
 
-So far, so good. Now we are going to configure `postcss` and its tailwind plugin to return CSS:
+So far, so good. Now we are going to configure `postcss` and its Tailwind plugin to return CSS:
 
 ```jsx
 // src/tailwind-as-a-service.js
@@ -128,21 +128,21 @@ app.get('/', async (req, res) => {
 ......
 ```
 
-We added the `postcss` and `tailwindcss` dependencies. Then we configure the Tailwindcss plugin for postcss with the [content](https://tailwindcss.com/docs/content-configuration) option.
+We just added the `postcss` and `tailwindcss` dependencies. Next, we have to configure the Tailwind plugin for PostCSS with the [content](https://tailwindcss.com/docs/content-configuration) option.
 
-This option tells Tailwindcss to inspect the HTML, JavaScript components and more files, to look for CSS classes to generate and include its CSS in the final result. It also allows us to put inline “raw” HTML.
+This option tells Tailwind to inspect the HTML, JavaScript components, and other files, to look for CSS classes to generate and include its CSS in the final result. It also allows us to write raw HTML inline.
 
-After that, we create a `postcssProcessor` with the configured plugin of Tailwindcss. This is responsible for parsing the CSS and applying all postcss plugins.
+After that, it is time to create a `postcssProcessor` with the configured Tailwind plugin, which is responsible for parsing the CSS and applying all PostCSS plugins.
 
-Finally, we process a “fake” CSS file with the default base, components and utility styles of Tailwindcss. This is necessary to make Tailwindcss generate all necessary CSS.
+Finally, we process a “fake” CSS file with the default base, components and utility styles of Tailwind. This is necessary to make Tailwind generate all necessary CSS.
 
-The result CSS is returned in the response. So if we run again the service with `node ./src/tailwind-as-a-service.js` and we request from the browser, then we can see the resulting CSS:
+The result CSS is returned in the response. So if we run the service with `node ./src/tailwind-as-a-service.js` again, and we request it from the browser, the resulting CSS will be shown:
 
 ![CSS response](images/css-response.png)
 
-Here you can see the base CSS that [Tailwindcss brings by default](https://tailwindcss.com/docs/preflight) and also, at the end, the `.bg-red-500` class that we are passing as raw HTML to the Tailwindcss config.
+Here, you can see [the base CSS Tailwind provides by default](https://tailwindcss.com/docs/preflight) and also the `.bg-red-500` class at the end that we are passing as raw HTML to the Tailwind config.
 
-So we have a service to request and return the CSS, but how do we configure that CSS? well let’s make this service receive parameters and use them to configure the Tailwindcss plugin:
+So, we have a service to request and return the CSS, but how do we configure that CSS? Let’s make this service receive parameters and use them to configure the Tailwind plugin:
 
 ```javascript
 // src/tailwind-as-a-service.js
@@ -169,14 +169,14 @@ app.post('/', async (req, res) => {
 
 Here, we changed the `.get` method into `.post` to be able to send and receive parameters in the request body, for larger parameters.
 
-Moreover, we pick `html` and `theme` parameters from the request body and use them to [configure Tailwindcss](https://tailwindcss.com/docs/configuration).
+Moreover, we pick `html` and `theme` parameters from the request body and use them to [configure Tailwind](https://tailwindcss.com/docs/configuration).
 
-> For simplicity, we are using only the `theme` part of the Tailwindcss configuration, but with this approach, we can configure any part of the [Tailwindcss configuration](https://tailwindcss.com/docs/configuration).
+> For simplicity, we are using only the `theme` part of the Tailwind configuration, but this approach, allows any part of the [Tailwind configuration](https://tailwindcss.com/docs/configuration).
 >
 
-## Creating Editor
+## Creating the Editor
 
-We are going to define some custom configuration for Tailwindcss Theme, which we will allow to modify by the user using an interface. We define here some values for a little example of components: buttons and titles. To keep small scope for this example we only allow to change of some colours and font properties:
+We are going to define some custom configurations for the Tailwind theme, which users will be able to modify through an interface. Below are the defined values for a simple example of components: buttons and titles. To keep the scope small, for this example we only allow some colors and font properties to be changed:
 
 ```jsx
 // src/custom-tailwind-config.js
@@ -232,10 +232,10 @@ export const customTailwindConfig = {
 };
 ```
 
-> Keep in mind that we are using the Tailwind Theme configuration for simplicity’s sake and, it is not the only way to achieve the same result. The whole Tailwindcss configuration could be overridden, included the [plugins](https://tailwindcss.com/docs/plugins) used and/or their configuration. For example, you could create your own Tailwindcss plugin, adding all your CSS components based on a configuration passed to the plugin. This configuration could be passed as parameter to the Tailwindcss service as we are doing here with the theme configuration.
+> Keep in mind that we are using the Tailwind theme configuration for the sake of simplicity – it is not the only way to achieve the same result. The whole Tailwind configuration could be overridden, including the [plugins](https://tailwindcss.com/docs/plugins) used and/or their configuration. For example, you could create your own Tailwind plugin and adding all your CSS components based on a configuration passed to the plugin. This configuration could be passed as a parameter to the Tailwind service as we are doing here with the theme configuration.
 >
 
-Now, we go to the `App.vue` component and remove all default content, adding some buttons and titles using the CSS utility classes which Tailwindcss generates with the previous Theme configuration:
+The next step is to go to the `App.vue` component and remove all default content, then add some buttons and titles using the CSS utility classes that Tailwind generates with the theme configuration that was just defined:
 
 ```html
 // src/App.vue
@@ -279,7 +279,7 @@ Now, we go to the `App.vue` component and remove all default content, adding som
 </template>
 ```
 
-Before running the `dev` script to serve the Vue project, we will modify this script in our `package.json` to parallelise its execution with the tailwind service:
+Before running the `dev` script to serve the Vue project, we need to modify this script in `package.json` to parallelize its execution with the Tailwind service:
 
 ```json
 "dev": "node ./src/tailwind-as-a-service.js & vite",
@@ -295,11 +295,11 @@ We are using the [latest version of Vite](https://github.com/vitejs/vite/blob/ma
 
 ![Running Vite](images/running-vite.png)
 
-And finally, we open that URL in the browser and… Ups! no styles?! what’s going on??
+Finally, we open that URL in the browser and… oops! no styles?! What’s going on? 🤯
 
 ![First try](images/first-try.png)
 
-This is because we are not using Tailwindcss directly in our Vue project as we usually do. Instead, we need to call our `tailwind-as-a-service` endpoint to retrieve the CSS. Ok then, let’s create the function to call the service.
+The styles are not being applied because we are not using Tailwind directly in our Vue project as we normally would. Instead, we have to call the `tailwind-as-a-service` endpoint to retrieve the CSS. Okay then, let’s create the function to call the service.
 
 We create a new file `fetch-css.js` in the `src` directory:
 
@@ -321,9 +321,9 @@ export async function fetchCss(tailwindCustomConfig) {
 
 ```
 
-This `async` function is receiving the custom tailwind config and fetching the tailwind service passing it as `theme:{ extend: tailwindCustomConfig }` parameter. We pass it inside `extend`to [keep all the default utilities as Tailwind has](https://tailwindcss.com/docs/theme#extending-the-default-theme), and we only add the new ones we need. We also obtain all the current HTML on the page and send it to the service as `html` parameter. Tailwindcss will use this HTML to know which CSS classes generate and which don't.
+This `async` function is receiving the custom Tailwind config and fetching the Tailwind service, passing it as the `theme:{ extend: tailwindCustomConfig }` parameter. We pass it inside `extend` to [keep all the default utilities Tailwind has](https://tailwindcss.com/docs/theme#extending-the-default-theme), and only add the new ones we need. We also obtain all the current HTML on the page and send it to the service as the `html` parameter. Tailwind will use this HTML to know which CSS classes generate and which don't.
 
-Following, we create a new component `Editor.vue` to use that function:
+The following step is to create a new component `Editor.vue` to use that function:
 
 ```html
 // src/components/Editor.vue
@@ -347,15 +347,15 @@ Following, we create a new component `Editor.vue` to use that function:
 </template>
 ```
 
-There are many things going on here:
+There are many things going on here. Let’s take a closer look:
 
 - We import the previous `customTailwindConfig` and the `fetchCss` function.
-- We add a `css` ref. If you are not familiar with the new Composition API of vue you can take a look at its [documentation](https://vuejs.org/api/composition-api-setup.html#basic-usage).
+- We add a `css` ref. If you are not already familiar with it, [check out the new Vue Composition API documentation](https://vuejs.org/api/composition-api-setup.html#basic-usage).
 - We create a new function `getCss` which calls the `fetchCss` and assigns the returned promise value to the `ref` value.
 - We use the `onMounted` [Vue lifecycle hook](https://vuejs.org/api/composition-api-lifecycle.html#onmounted) to call the previous function whenever the component is mounted.
-- Finally, we create a [dynamic component](https://vuejs.org/guide/essentials/component-basics.html#dynamic-components) to attach the CSS to the DOM. This dynamic component will render the CSS inside a `<style>` tag, when the `css` ref is updated. This way whenever we update the `css` ref value, the styles will be updated.
+- Finally, we create a [dynamic component](https://vuejs.org/guide/essentials/component-basics.html#dynamic-components) to attach the CSS to the DOM. This dynamic component will render the CSS inside a `<style>` tag, when the `css` ref is updated. That way, whenever we update the `css` ref value, the styles will be updated.
 
-> We use a dynamic component as a workaround because the `<style>` tag is not allowed inside `<template>` tag by Vue template compiler.
+> We use a dynamic component as a workaround because, in the Vue template compiler the `<style>` tag is not allowed inside the `<template>` tag.
 >
 
 Now, we import and use the `Editor.vue` component inside the `App.vue`:
@@ -377,13 +377,13 @@ Now, we import and use the `Editor.vue` component inside the `App.vue`:
 </script>
 ```
 
-If we reload again the URL then we do see the styles:
+Ready to see the styles? Reload the URL and they will appear:
 
 ![Second Try](images/second-try.png)
 
-Finally, the last step is to make the `Editor.vue` modify the default Theme from the Tailwindcss configuration and request again the CSS from the service to see a live view of the changes.
+Finally, the last step is to make the `Editor.vue` modify the default theme from the Tailwind configuration and request the CSS again from the service to see a live view of the changes.
 
-We are starting with the colours, adding a colour picker for each colour we want to configure.
+We are starting with the colours, adding a color picker for each color we want to configure.
 
 ```html
 // src/components/Editor.vue
@@ -424,25 +424,25 @@ We are starting with the colours, adding a colour picker for each colour we want
 </template>
 ```
 
-In this step, we are doing several changes to be able to modify reactively the configuration:
+In this step, we are making several changes to be able to modify the configuration reactively:
 
 - In the `<script>`:
   - First, we create a [reactive object](https://vuejs.org/api/reactivity-core.html#reactive) with our `customTailwindConfig` as the initial value.
   - Then we fetch the CSS with this reactive object.
-  - Finally, we add a [`watch`](https://vuejs.org/guide/essentials/watchers.html) to call `getCss` function, whenever this reactive object changes
+  - Finally, we add a [`watch`](https://vuejs.org/guide/essentials/watchers.html) to call the `getCss` function, whenever this reactive object changes
 - In the `<template>`:
-  - We add two loops [`v-for`](https://vuejs.org/api/built-in-directives.html#v-for) to iterate over each colour and each shade, binding a colour picker to the value.
-  - We use the [`v-model`](https://vuejs.org/api/built-in-directives.html#v-model) directive with the [`lazy`](https://vuejs.org/guide/essentials/forms.html#lazy) modifier to not request too many times whenever we move the selector on the colour picker.
+  - We add two loops [`v-for`](https://vuejs.org/api/built-in-directives.html#v-for) to iterate over each color and each shade, binding a color picker to the value.
+  - We use the [`v-model`](https://vuejs.org/api/built-in-directives.html#v-model) directive with the [`lazy`](https://vuejs.org/guide/essentials/forms.html#lazy) modifier so that not too many requests are made whenever we move the selector over the color picker.
 
-  > Notice we are binding the colour shade to the `v-model` using the colour and the shade name, instead of using the `v-for` variable directly. This is because the variable used to iterate in the `v-for` loops is not allowed to be modified. So the workaround is to access the value indirectly.
+  > Notice, we are binding the color shade to the `v-model` using the color and the shade name, instead of using the `v-for` variable directly. This is because the variable used to iterate in the `v-for` loops cannot be modified; the workaround lets us access the value indirectly.
   >
 
-  Then, if we run again the application we can see the colour pickers and changing a color the component using that colour will be updated automatically:
+  If we run the application again, we can see the color pickers. Now, by changing a color, the component using that color will be updated automatically:
 
   ![Colour Editor](images/color-editor.png)
 
 
-Finally, we add also the part of the font size and font weight:
+Finally, we configure font size and font weight:
 
 ```html
 // src/components/Editor.vue
@@ -485,27 +485,30 @@ Finally, we add also the part of the font size and font weight:
 </template>
 ```
 
-Here we are repeating the same principle as with the colours, but with a single `v-for` for each case. Moreover, for the case of font size, we have to deal with the `rem` unit, adding and removing it, as it is necessary to pass it to the Tailwindcss configuration.
+Here, we are repeating the same principle used for the colours, but with a single `v-for` for each case. Moreover, for the case of font size, the `rem` unit has to be added and removed to the Tailwind configuration.
 
-And here is the final aspect of the editor:
+Alright, the moment you have been waiting for has arrived! This is what the editor looks like:
 
 ![Full Editor](images/full-editor.png)
 
-So this is the starting point to create your own no-code tool, to configure your project and see the changes on the fly. Remind that using the Theme values is not the only way to make this configurable, and you can use all the Tailwindcss config options.
-You can find all the working code [here](https://github.com/tajespasarela/tailwind-editor) .Please, feel free to open issues, give feedback and, if you have found it useful, a star would be much appreciated 😉.
+This editor is the starting point for creating your own no-code tool that allows you to configure your project and see the changes on the fly. Remember that using theme values is not the only way to make this configurable; you can also use all the Tailwind config options.
 
-## Why not CSS custom properties AKA CSS variables?
+## Why not CSS custom properties, AKA CSS variables?
 
-We could achieve exactly the same by using CSS variables as values in the Tailwindcss Theme configuration, and just modifying the value of these variables in the front, without the need for any service neither Tailwindcss process on the fly.
+Sure, we could achieve exactly the same result by using CSS variables as values in the Tailwind theme configuration. Modifying the value of these variables in the front would remove need to use any additional service and adapt the Tailwind process on the fly.
 
-Then, after saving these variables and loading them in production will have deployed the changes.
+Then, after saving these variables and loading them in production, the changes would be deployed.
+
+But there’s a reason, promise!
 
 ![Why](images/why.gif)
 
-Well, in this example we are only modifying the Theme part of the Tailwindcss configuration, but there are [plenty more options](https://tailwindcss.com/docs/configuration) in that configuration.
+In this example, we are only modifying the theme part of the Tailwind configuration, but there are [plenty more options](https://tailwindcss.com/docs/configuration) in that configuration.
 
-Imagine you created a [Tailwindcss plugin](https://tailwindcss.com/docs/plugins) which adds your own Design Components and CSS utilities. These plugins can [have options](https://tailwindcss.com/docs/plugins#exposing-options) too.
+Imagine you created a [Tailwind plugin](https://tailwindcss.com/docs/plugins) which adds your own Design Components and CSS utilities. These plugins can [have options](https://tailwindcss.com/docs/plugins#exposing-options) too.
 
-So, with the exposed solution you can modify all these possible configurations and options and see the result directly on the fly.
+So, with the solution laid out here, you can modify all these possible configurations and options and see the results immediately.
 
-Also, you can use the created service to directly save the configuration on your database, by user or customer to later retrieve it during the deployment process or for any other purpose you need.
+Also, you can use the service created to directly save the configuration in your database (by user or customer) to later retrieve it during the deployment process or for any other purpose you need.
+
+Ready to get started? All the [working code is available here](https://github.com/tajespasarela/tailwind-editor). Please, feel free to open issues and give feedback. Also, if you find it useful, a star would be much appreciated 😉.
