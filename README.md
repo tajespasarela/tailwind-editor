@@ -21,7 +21,7 @@ To do so, we are going to create a simple service in Node using [ExpressJs](http
 
 ## Creating the Project
 
-Let’s create the new project called `tailwind-editor` with [Vite](https://vitejs.dev/) running `npm create`. I’m going to use [Vue](https://vuejs.org/) for the Frontend because I’m more comfortable with it and also because it is awesome 😉.
+Let’s create a new project called `tailwind-editor` with [Vite](https://vitejs.dev/) running `npm create`. I’m going to use [Vue](https://vuejs.org/) for the Frontend because I’m more comfortable with it and also because it is awesome 😉.
 
 ```bash
 $ dev npm create vite@latest
@@ -68,7 +68,7 @@ The resulting package:
 
 Now, we are going to create the service that will receive the Tailwind config and return the resulting CSS.
 
-Let’s start with a file `src/tailwind-as-a-service.js` which will contain the [Express](https://expressjs.com/) server with the `cors` middleware to support [cross-origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) calls. It is listening by port 8080 to any request to the root path with a `GET` method and returns the text `Hello World`.
+Let’s start with the file `src/tailwind-as-a-service.js` which will contain the [Express](https://expressjs.com/) server with the `cors` middleware to support [cross-origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) calls. It is listening by port 8080 to any request to the root path with a `GET` method and returns the text `Hello World`.
 
 ```jsx
 // src/tailwind-as-a-service.js
@@ -285,7 +285,7 @@ Before running the `dev` script to serve the Vue project, we need to modify this
 "dev": "node ./src/tailwind-as-a-service.js & vite",
 ```
 
-Afterwards, we run the project and visit the locally served URL:
+Afterwards, we run the project and visit the locally-served URL:
 
 ```bash
 $ npm run dev
@@ -383,7 +383,7 @@ Ready to see the styles? Reload the URL and they will appear:
 
 Finally, the last step is to make the `Editor.vue` modify the default theme from the Tailwind configuration and request the CSS again from the service to see a live view of the changes.
 
-We are starting with the colours, adding a color picker for each color we want to configure.
+We are starting with the colors, adding a color picker for each color we want to configure.
 
 ```html
 // src/components/Editor.vue
@@ -485,7 +485,7 @@ Finally, we configure font size and font weight:
 </template>
 ```
 
-Here, we are repeating the same principle used for the colours, but with a single `v-for` for each case. Moreover, for the case of font size, the `rem` unit has to be added and removed to the Tailwind configuration.
+Here, we are repeating the same principle used for the colours, but with a single `v-for` for each case. Moreover, for the case of font size, the `rem` unit has to be added and removed before it is passed to the Tailwind configuration.
 
 Alright, the moment you have been waiting for has arrived! This is what the editor looks like:
 
